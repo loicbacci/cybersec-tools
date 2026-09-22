@@ -1,0 +1,11 @@
+[package]
+name = "port-scan"
+version = "0.1.0"
+edition = "2024"
+authors = ["Loïc Baccigalupi"]
+
+[dependencies]
+
+[[bin]]
+name = "port-scan"
+path = "src/main.rs"
