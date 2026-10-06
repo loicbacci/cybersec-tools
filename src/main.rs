@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use crate::port_scan::{PortScanArgs, port_scan};
 
 mod port_scan;
+mod dns;
 
 #[derive(Parser)]
 #[command(version)]
