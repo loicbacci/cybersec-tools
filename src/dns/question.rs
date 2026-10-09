@@ -1,4 +1,23 @@
-pub struct Question {}
+pub struct Question {
+    entries: Vec<QuestionEntry>,
+}
+
+impl Question {
+    pub fn new(entries: Vec<(&str, QTYPE, QCLASS)>) -> Self {
+        let q_entries = entries
+            .into_iter()
+            .map(|(dn, qt, qc)| QuestionEntry::new(dn, qt, qc))
+            .collect();
+
+        Question { entries: q_entries }
+    }
+
+    pub fn write_to_buf(&self, buf: &mut Vec<u8>) {
+        for entry in &self.entries {
+            entry.write_to_buf(buf);
+        }
+    }
+}
 
 struct QuestionEntry {
     /// The domain name
@@ -9,19 +28,73 @@ struct QuestionEntry {
     qclass: QCLASS,
 }
 
+impl QuestionEntry {
+    fn new(domain_name: &str, qtype: QTYPE, qclass: QCLASS) -> QuestionEntry {
+        let qname = QNAME::new(domain_name);
+
+        QuestionEntry {
+            qname,
+            qtype,
+            qclass,
+        }
+    }
+
+    pub fn write_to_buf(&self, buf: &mut Vec<u8>) {
+        self.qname.write_to_buf(buf);
+
+        let qtype: u16 = self.qtype as u16;
+        let qclass: u16 = self.qclass as u16;
+
+        buf.extend_from_slice(&qtype.to_be_bytes());
+        buf.extend_from_slice(&qclass.to_be_bytes());
+    }
+}
+
 struct QNAME {
     /// Each label of the domain name
     labels: Vec<Label>,
 }
 
+impl QNAME {
+    /// Creates a question QNAME from a domain name
+    fn new(domain_name: &str) -> QNAME {
+        // Split the domain name into labels
+        let label_strs = domain_name.split('.');
+        let labels = label_strs.map(|l| Label::new(&l)).collect();
+
+        QNAME { labels }
+    }
+
+    fn write_to_buf(&self, buf: &mut Vec<u8>) {
+        for label in &self.labels {
+            label.write_to_buf(buf);
+        }
+
+        // Write termination
+        buf.push(0);
+    }
+}
+
 struct Label {
-    /// Number of octets for the label
-    length: u8,
     /// The letters of the label
     letters: Vec<u8>,
 }
 
-enum QTYPE {
+impl Label {
+    fn new(label_str: &str) -> Label {
+        let bytes: Vec<u8> = label_str.as_bytes().to_vec();
+
+        Label { letters: bytes }
+    }
+
+    fn write_to_buf(&self, buf: &mut Vec<u8>) {
+        buf.push(self.letters.len() as u8);
+        buf.extend_from_slice(self.letters.as_slice());
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum QTYPE {
     /// Host address
     A = 1,
     /// Authoritative name server
@@ -65,7 +138,8 @@ enum QTYPE {
     STAR = 255,
 }
 
-enum QCLASS {
+#[derive(Copy, Clone)]
+pub enum QCLASS {
     /// The internet
     IN = 1,
     /// (Obsolete) CSNET
@@ -76,5 +150,5 @@ enum QCLASS {
     HS = 4,
 
     /// Any class
-    STAR = 255
+    STAR = 255,
 }

@@ -33,7 +33,7 @@ impl Header {
         }
     }
 
-    fn write_to_buf(&self, buf: &mut Vec<u8>) {
+    pub fn write_to_buf(&self, buf: &mut Vec<u8>) {
         let flags = &self.flags.to_u16();
 
         buf.extend_from_slice(&self.id.to_be_bytes());
@@ -110,20 +110,20 @@ impl HeaderFlags {
 
 // ============ ENUMS ================
 #[derive(Copy, Clone)]
-enum QR {
+pub enum QR {
     Query = 0,
     Response = 1,
 }
 
 #[derive(Copy, Clone)]
-enum OPCODE {
+pub enum OPCODE {
     Query = 0,
     InverseQuery = 1,
     Status = 2,
 }
 
 #[derive(Copy, Clone)]
-enum RCODE {
+pub enum RCODE {
     Success = 0,
     /// Was unable to interpret query
     FormatError = 1,
